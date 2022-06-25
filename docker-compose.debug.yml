@@ -1,0 +1,44 @@
+services:
+  client:
+    build:
+      context: ./code/client
+      dockerfile: ./code/client/Dockerfile
+    image: src_client:latest
+    container_name: fluxo_de_caixa_client
+    volumes:
+      - ./code/client:/client
+      - fluxocaixa-nodemodules:/client/node_modules
+    environment:
+      - HOST=0.0.0.0
+    ports:
+      - 3000:3000
+    command:
+      [
+        "bash",
+        "-c",
+        "cp /client/plugins/config-sample.js /client/plugins/config.js && npm run dev"
+      ]
+  server:
+    build:
+      context: ./code/server
+      dockerfile: ./code/server/Dockerfile
+    image: src_server:latest
+    container_name: fluxo_de_caixa_server_debug
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./code/server:/server
+      - ./code/databases:/databases
+    ports:
+      - 8000:8000
+      - 5678:5678
+    command:
+      [
+        "sh",
+        "-c",
+        "pip install debugpy && python -m debugpy --wait-for-client --listen 0.0.0.0:5678 -m uvicorn app:app --reload --host 0.0.0.0 --port 8000"
+      ]
+
+volumes:
+  fluxocaixa-nodemodules:
+    name: "fluxo_de_caixa_node_modules"
